@@ -1,25 +1,27 @@
 import random
 
-key = [0, 4, 8, 12] # Il y a pas 16 hex au lieu de 16 bits ? Voir version original et chat gtp
+key = ["0", "4", "8", "12"] # Il y a pas 16 hex au lieu de 16 bits ? Voir version original et chat gtp
 a = random.randint(0,400000)
 print(a)
 mes = hex(a)
 
-def cut_mes(m): # m en binaire
-    m = [i for i in m[2:]]
-    m = [m[i:i+4] for i in range(0, len(m), 4)] # 16 car on passe avec des bits
+def cut_mes(m): # m en hex -> on retourne un tab de la forme [[hex][hex][hex][hex]][...]
+    # print(m)
+    m = [i for i in m[2:]] # On ne prends pas en compte "0x"
+    m = [m[i:i+4] for i in range(0, len(m), 4)] # On fait tableau de tableau, ds chaque cas 16 bits sous forme de 4 case contenant un hex
+    # print(m)
     last_elem_len = len(m[-1])
     if last_elem_len < 4:
-        last = hex((4 - last_elem_len))   # Les 2 derniers octets
-        m[-1] += [last[2:]] * (4 - last_elem_len) # On ajoute des 0 pour compléter.
-        m += [[last[2:]] * 4] 
+        last = hex((4 - last_elem_len))   # Le nombre de hex ajouté
+        m[-1] += [last[2:]] * (4 - last_elem_len) # On ajoute last hex dans le dernier tab de 16 bits
+        m += [[last[2:]] * 4] # Puis on ajoute 16 bits, de 4 hex de valeur last
     else:
         m += [[hex(0)[2:]] * 4]
-    print(m)
+    print(m) # On aura ajouté au moins 16 bits qu'il faudra supprimé et qui indiquent le nbr de hex à enlevé en plus
     return m
 
 # On reconstitue le message à partir d'un tableaux des morceaux du messages
-def uncut_mes(m):
+def uncut_mes(m): # On supprime les 16 derniers bits donc la derniere case, et dans l'avant derniere case on supprime a cases car a indique le nombre de hex qui ont été ajoutés
     a = 4 - m[-1][-1]
     m = m.pop()
     m[-1] = m[-1][:-a]
@@ -57,21 +59,24 @@ def P(l):
 
     return nouvelle_liste
 
-def S(entree):
-    substitution = [
-        0xE, 0x4, 0xD, 0x1, 0x2, 0xF, 0xB, 0x8, 0x3, 0xA, 0x6, 0xC, 0x5, 0x9, 0x0, 0x7
-    ]  # Table de substitution
-
-    # Extraire les 4 bits de poids faible
-    index = entree & 0b1111
-
-    # Substituer les 4 bits avec la table de substitution
-    decimal = substitution[index]
-
-    # Convertir la sortie décimale en hexadécimal
-    # sortie_hex = hex(decimal)[2:].upper()
-
-    return decimal
+substitution = {
+    '0': 'e',
+    '1': '4',
+    '2': 'd',
+    '3': '1',
+    '4': '2',
+    '5': 'f',
+    '6': 'b',
+    '7': '8',
+    '8': '3',
+    '9': 'a',
+    'a': '6',
+    'b': 'c',
+    'C': '5',
+    'd': '9',
+    'e': '0',
+    'f': '7'
+}
 
 def inv_S(entree):
     substitution = [
@@ -93,10 +98,27 @@ def F(k, decalage):
     k = k[-decalage:] + k[:-decalage]
     return k
 
+def xor_4_bits(a, b): # a du message et b de la clef sous forme de 4 bits 
+    # print("xor")
+    # print(type(a))
+    bin_a = bin(int(a, 16))[2:].zfill(4) # On convertit a en int de 0 à 15 puis en binaire avec bin 
+    # Puis on enleve "0b" avec [2:] puis avec zfill(4) on s'assure que on ai bien 4 bits en ajoutant des 0 au debut si nécéssaire.
+    # print(type(b))
+    bin_b = bin(int(b, 16))[2:].zfill(4)
+
+    res = ""
+
+    for i in range(4):
+        if bin_a[i] != bin_b[i]: 
+            res += "1"
+        else: res += "0"
+    
+    return hex(int(res,2))[2:]
+
 def chiffre(m, k): #Fait le xor bit par bit sur chaque elem qui fait 4 bits
-    for i in range(0,len(m)): # chaque morceaux du mess de 16 bits
-        for j in range(0,4): # decomposé en 4, x1..x4
-            m[i][j] = (m[i][j] + k[i][j])%16   # Ici k est Ki car on a appelé F avant
+    for i in range(0,4): # decomposé en 4, x1..x4
+        m[i] = xor_4_bits(m[i], k[i])
+        # m[i][j] = (m[i][j] + k[i][j])%16   # Ici k est Ki car on a appelé F avant
     return m
 
 def dechiffre(m, k):
@@ -107,14 +129,18 @@ def dechiffre(m, k):
 
 def chiffrement(m, k):
     l = cut_mes(m)    
+    print("Chiffrement...")
+    print(l)
     for j in range(0,len(l)):
         elem = l[j]
-        elem = [elem[i:i+4] for i in range(0, len(elem), 4)]
+        print(elem)
+        # elem = [elem[i:i+4] for i in range(0, len(elem), 4)]
+        print(elem)
         for i in range(0,4): # On met en bits pour faire XOR
             elem = chiffre(elem, F(k, i))
-            elem = uncut_mes(elem) # On remets sous forme hexa en gros, avec 4 xi de 4 bits
-            for i in range(0,len(elem)):
-                elem[i] = S(elem[i]) # On applique la substitution sur chaque xi
+            # elem = uncut_mes(elem) # On remets sous forme hexa en gros, avec 4 xi de 4 bits
+            for i in range(0,4):
+                elem[i] = substitution[elem[i]] # On applique la substitution sur chaque xi
             elem = [elem[i:i+4] for i in range(0, len(elem), 4)] # On les remets sous formes de bits 
             elem = P(elem) # et on applique permutation
         elem = uncut_mes(elem)
@@ -151,6 +177,7 @@ res = mes
 # print(cut_mes(res))
 # print(key)
 crypt = chiffrement(res, key)
+print("on passe le chiffrement")
 print(to_hex(crypt))
 decrypt = uncut_mes(dechiffrement(crypt, key))
 print(to_hex(decrypt))
