@@ -25,7 +25,6 @@ def discrete_logarithm(g, y, p):
         if y in table:
             return i * t + table[y]
         y = (y * g_t) % p
-    
     return None
 
 res = naive_logarithm(gen, y, p)
