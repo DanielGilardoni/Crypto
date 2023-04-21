@@ -1,4 +1,5 @@
 import math
+from Crypto.Util.number import *
 
 p = 22091
 gen = 2
@@ -10,7 +11,6 @@ def naive_logarithm(g, y, p):
         x = (x * g) % p
         if x == y:
             return i
-    
     return None
 
 def discrete_logarithm(g, y, p):
@@ -19,7 +19,7 @@ def discrete_logarithm(g, y, p):
     for i in range(t):
         table[(g**i) % p] = i
     
-    g_inv = (g**(p - 2)) % p
+    g_inv = inverse(g, p)
     g_t = (g_inv**t) % p
     for i in range(t):
         if y in table:

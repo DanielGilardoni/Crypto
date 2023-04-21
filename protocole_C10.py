@@ -1,42 +1,13 @@
 import random
 import math
-
-def test_Miller_Rabin(n, k):
-    if n == 2 or n == 3:
-        return True
-    
-    if n % 2 == 0:
-        return False
-    
-    d = n - 1
-    r = 0
-    while d % 2 == 0:
-        r += 1
-        d //= 2
-    
-    for _ in range(k):
-        a = random.randint(2, n - 2)
-        x = pow(a, d, n)
-        if x == 1 or x == n - 1:
-            continue
-        for _ in range(r - 1):
-            x = pow(x, 2, n)
-            if x == n - 1:
-                break
-        else:
-            return False
-    return True
+from Crypto.Util.number import *
 
 def gen_premier_sophie_germain():
-    n = random.randint(2, 2**10)
-    while not test_Miller_Rabin(n, 10):
-        n = random.randint(2, 2**10)
+    n = getPrime(2**4)
     
     q = 2 * n + 1
-    while not test_Miller_Rabin(q, 10):
-        n = random.randint(2, 2**10)
-        while not test_Miller_Rabin(n, 10):
-            n = random.randint(2, 2**10)
+    while not isPrime(q):
+        n = getPrime(2**4)
         q = 2 * n + 1
     
     return q, n
@@ -82,16 +53,20 @@ def genB():
 # A vérifie le triplet (p, g, h)
 def verifA(triplet):
     p, g, h = triplet
-    if not test_Miller_Rabin(p, 10) or not test_Miller_Rabin(p - 1 // 2, 10):
+
+    if not isPrime(p) or not isPrime((p-1)//2):
         return False
+
     if pow(g, p-1, p) != 1:
         return False
     for f in prime_factors(p-1):
         if pow(g, (p-1)//f, p) == 1:
             return False
+    
     q = (p - 1) // 2
     if pow(h, q, p) != 1:
         return False
+        
     return True
 
 def commitA(triplet, xy):

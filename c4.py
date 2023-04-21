@@ -147,7 +147,8 @@ key = [0, 4, 8, 12] # clef
 
 crypt = chiffrement(mes_int, key)
 decrypt = dechiffrement(crypt, key)
-print(tab_int_to_text(decrypt))
+print("Message crypté: ", tab_int_to_text(crypt))
+print("Message décrypté: ", tab_int_to_text(decrypt))
 # print(res == decrypt)
 # print(crypt == decrypt)
 # print(res == crypt)
