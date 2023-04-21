@@ -1,5 +1,6 @@
 import random
 
+# Verifie si n est premier 
 def is_prime(n):
     if n == 2:
         return True
@@ -10,6 +11,7 @@ def is_prime(n):
             return False
     return True
 
+# Calcul la valeur d'un polynome pour la valeur x et dont les coeff sont dans a.
 def polynome(a, x):
     y = 0
     for i in range(len(a)):
@@ -28,7 +30,7 @@ def generate(m, k):
 
     return p, a
 
-# génère les parts de secret si pour les agents
+# génère les parts de secret  pour les agents
 def distribute(m, k, g, s):
     res = []
     p, a = g
@@ -51,7 +53,7 @@ def coalition(p, k, agents):
         secret += term % p
     return secret % p
 
-m = 10
+m = 10 # le nombre de parties
 k = 10
 gen = generate(m, k)
 secret = 157 % gen[0]
