@@ -89,7 +89,9 @@ def verifA(triplet):
     for f in prime_factors(p-1):
         if pow(g, (p-1)//f, p) == 1:
             return False
-    
+    q = (p - 1) // 2
+    if pow(h, q, p) != 1:
+        return False
     return True
 
 def commitA(triplet, xy):
@@ -113,7 +115,7 @@ print(gen_b)
 print(verifA(gen_b))
 
 xy = (random.randint(2, gen_b[0]-1), random.randint(2, gen_b[0]-1))
-print(xy)
+print(revealA(xy))
 
 c = commitA(gen_b, xy)
 print(c)
